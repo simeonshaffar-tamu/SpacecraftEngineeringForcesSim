@@ -6,28 +6,30 @@ from dataclasses import dataclass
 import numpy as np
 
 import constants as C
+from typing_aliases import Vec3
 
 
 @dataclass
 class PerturbationResult:
-    drag: np.ndarray
-    j2: np.ndarray
-    moon: np.ndarray
-    sun: np.ndarray
+    drag: Vec3   # [m/s^2]
+    j2: Vec3     # [m/s^2]
+    moon: Vec3   # [m/s^2]
+    sun: Vec3    # [m/s^2]
 
     @property
-    def total(self) -> np.ndarray:
+    def total(self) -> Vec3:
         return self.drag + self.j2 + self.moon + self.sun
 
 
-def _vec3(x, name):
+def _vec3(x: Vec3, name: str) -> Vec3:
     v = np.asarray(x, dtype=float)
     if v.shape != (3,) or not np.all(np.isfinite(v)):
         raise ValueError(f"{name} must be a finite 3-vector")
     return v
 
 
-def j2_acceleration(r, mu=C.MU_EARTH, j2=C.J2_EARTH, r_eq=C.R_EARTH):
+def j2_acceleration(r: Vec3, mu: float = C.MU_EARTH, j2: float = C.J2_EARTH,
+                    r_eq: float = C.R_EARTH) -> Vec3:
     """Earth J2 acceleration [m/s^2] at ECI position r [m]."""
     x, y, z = r
     r2 = r @ r
@@ -37,22 +39,28 @@ def j2_acceleration(r, mu=C.MU_EARTH, j2=C.J2_EARTH, r_eq=C.R_EARTH):
     return k * np.array([x * (1.0 - zr2), y * (1.0 - zr2), z * (3.0 - zr2)])
 
 
-def drag_acceleration(r, v, rho, cd, area, mass, omega=C.OMEGA_EARTH):
+def drag_acceleration(r: Vec3, v: Vec3, rho: float, cd: float, area: float, mass: float,
+                      omega: Vec3 = C.OMEGA_EARTH) -> Vec3:
     """Drag acceleration [m/s^2] against a rigidly co-rotating atmosphere."""
     v_rel = v - np.cross(np.asarray(omega, dtype=float), r)
     return -0.5 * rho * cd * (area / mass) * np.linalg.norm(v_rel) * v_rel
 
 
-def third_body_acceleration(r, r_body, mu_body):
+def third_body_acceleration(r: Vec3, r_body: Vec3, mu_body: float) -> Vec3:
     """Differential point-mass acceleration [m/s^2] of the spacecraft relative to Earth."""
     d = r_body - r
     return mu_body * (d / np.linalg.norm(d) ** 3 - r_body / np.linalg.norm(r_body) ** 3)
 
 
-def compute_perturbations(r, v, mass, drag_area, cd, rho, r_sun, r_moon,
-                          enable_drag=True, enable_j2=True,
-                          enable_moon=True, enable_sun=True) -> PerturbationResult:
-    """Compute each enabled perturbing acceleration (disabled ones are zero vectors)."""
+def compute_perturbations(r: Vec3, v: Vec3, mass: float, drag_area: float, cd: float, rho: float,
+                          r_sun: Vec3, r_moon: Vec3,
+                          enable_drag: bool = True, enable_j2: bool = True,
+                          enable_moon: bool = True, enable_sun: bool = True) -> PerturbationResult:
+    """Compute each enabled perturbing acceleration (disabled ones are zero vectors).
+
+    Vec3 args: r [m], v [m/s], r_sun/r_moon (Earth->body) [m]. Scalars: mass [kg], drag_area [m^2],
+    cd [-], rho [kg/m^3].
+    """
     r, v = _vec3(r, "r"), _vec3(v, "v")
     r_sun, r_moon = _vec3(r_sun, "r_sun"), _vec3(r_moon, "r_moon")
     if mass <= 0.0:

@@ -12,6 +12,11 @@ Sun and Moon differential point-mass gravity) at a single instant. No orbit prop
 | Spacecraft | mass m, drag area A_D, drag coefficient C_D | kg, m², – |
 | Environment | density ρ at spacecraft; Earth→Sun and Earth→Moon position vectors (same ECI frame, same instant as ρ) | kg/m³, m |
 
+**Alternative input:** set `input_mode = "cartesian"` in `config.py` and give ECI position `r_m` [m] and velocity
+`v_mps` [m/s] directly (as in the assignment's test cases). Accelerations are computed from that state as-is. For the
+plots, orbit elements are derived from (r, v); if the state is not on a bound, non-degenerate orbit (e.g. v = 0 or
+v parallel to r), the accelerations are still printed and the plots are skipped.
+
 Keplerian elements are converted internally to Cartesian ECI position **r** [m] and velocity **v** [m/s]
 (`orbital_elements.py`); the acceleration function takes Cartesian **r**, **v**.
 
@@ -48,3 +53,16 @@ Earth μ, R_E, J2 (`constants.py`) are standard values — **verify against the 
 - **Key follow-up:** Use Python with a virtual environment; inputs live in a `.py` file, outputs are terminal printouts.
 - **Note:** Spacecraft parameters, density and Sun/Moon vectors were added to the config by the assistant because the
   function needs them (per the assignment); Earth constants are assistant-supplied standard values.
+
+## Diagrams (`plotting.py`, saved to `outputs/`)
+1. **Orbit plane** — viewed along the orbit's angular momentum vector.
+2. **Sun/Moon/orbit** — viewed along Earth's orbital angular momentum about the Sun (ecliptic north).
+   The ecliptic normal is fixed in the idealized ECI frame as [0, −sin ε, cos ε], ε = 23.4393°, with +x ECI as the
+   vernal equinox direction. Everything is projected onto the ecliptic plane. Earth (translucent), the orbit, the
+   nodes and the spacecraft are to scale relative to each other; the Sun and Moon are far too distant to fit, so they
+   are markers along their true projected directions (true distances in the legend). Filled circle = ascending node
+   (RAAN), open circle = descending node (LDDN). Both diagrams show the spacecraft and direction-only acceleration
+   arrows, and a slider sets the true anomaly in the interactive figure.
+   The Sun/Moon plot also shows Earth's equator (tilted ellipse) and spin axis (N toward viewer, S behind). Depth cues:
+   near-side orbit/equator are solid and drawn over the translucent Earth; far-side parts are dashed and drawn beneath it;
+   the spacecraft is hollow with faded arrows when behind.
